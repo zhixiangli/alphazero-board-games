@@ -84,6 +84,13 @@ That’s it — no extra setup, no web app, no external service.
 
 ---
 
+
+## Gomoku 15×15 self-play animation
+
+A Gomoku 15×15 self-play sample from this codebase, showcasing strong and smart gameplay.
+
+![Gomoku 15x15 self-play animation](gomoku_15_15/assets/self_play.svg)
+
 ## How gameplay works (standard input/output)
 
 When you run a `stdio_play` command:
