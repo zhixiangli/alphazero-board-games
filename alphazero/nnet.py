@@ -223,13 +223,18 @@ class AlphaZeroNNet(NNet):
     def load_checkpoint(self, filename):
         files = glob.glob(filename + "*.pt")
         if len(files) < 1:
+            logging.warning("no checkpoint files found for pattern %s*.pt", filename)
             return
         latest_file = max(files, key=os.path.getmtime)
+        latest_file_abs_path = os.path.abspath(latest_file)
         try:
-            checkpoint = torch.load(latest_file, weights_only=True)
+            logging.info("loading model checkpoint from %s", latest_file_abs_path)
+            checkpoint = torch.load(latest_file_abs_path, weights_only=True)
             self.model.load_state_dict(checkpoint["model"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
             self._frozen_model = None
-            logging.info("load checkpoint from %s", latest_file)
+            logging.info("loaded model checkpoint from %s", latest_file_abs_path)
         except (RuntimeError, KeyError) as e:
-            logging.error("failed to load checkpoint from %s: %s", latest_file, e)
+            logging.error(
+                "failed to load checkpoint from %s: %s", latest_file_abs_path, e
+            )
