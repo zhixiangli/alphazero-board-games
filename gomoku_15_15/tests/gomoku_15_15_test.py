@@ -83,6 +83,96 @@ def test_four_in_a_row_is_not_terminal_when_five_required(gomoku15_game, build_s
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize(
+    "name,moves,last_action,expected",
+    [
+        (
+            "open_three_horizontal",
+            [
+                # . . . . . . .
+                # . . . B B B .
+                # . . . . . . .
+                (ChessType.BLACK, 7, 6),
+                (ChessType.BLACK, 7, 7),
+                (ChessType.BLACK, 7, 8),
+            ],
+            7 * 15 + 8,
+            None,
+        ),
+        (
+            "closed_four_horizontal",
+            [
+                # . W B B B B .
+                (ChessType.WHITE, 7, 5),
+                (ChessType.BLACK, 7, 6),
+                (ChessType.BLACK, 7, 7),
+                (ChessType.BLACK, 7, 8),
+                (ChessType.BLACK, 7, 9),
+            ],
+            7 * 15 + 9,
+            None,
+        ),
+        (
+            "broken_three_with_gap",
+            [
+                # . . B B . B . .
+                (ChessType.BLACK, 4, 4),
+                (ChessType.BLACK, 4, 5),
+                (ChessType.BLACK, 4, 7),
+            ],
+            4 * 15 + 7,
+            None,
+        ),
+        (
+            "jumped_four_not_five",
+            [
+                # . B B . B B .
+                (ChessType.BLACK, 10, 4),
+                (ChessType.BLACK, 10, 5),
+                (ChessType.BLACK, 10, 7),
+                (ChessType.BLACK, 10, 8),
+            ],
+            10 * 15 + 8,
+            None,
+        ),
+        (
+            "double_open_three_cross",
+            [
+                # Vertical:   . B B B .
+                # Horizontal: . B B B .
+                # Crosses at (7,7), both are open-threes but no five yet.
+                (ChessType.BLACK, 6, 7),
+                (ChessType.BLACK, 7, 7),
+                (ChessType.BLACK, 8, 7),
+                (ChessType.BLACK, 7, 6),
+                (ChessType.BLACK, 7, 8),
+            ],
+            7 * 15 + 8,
+            None,
+        ),
+        (
+            "open_four_becomes_five",
+            [
+                # . B B B B B .
+                (ChessType.BLACK, 12, 4),
+                (ChessType.BLACK, 12, 5),
+                (ChessType.BLACK, 12, 6),
+                (ChessType.BLACK, 12, 7),
+                (ChessType.BLACK, 12, 8),
+            ],
+            12 * 15 + 8,
+            ChessType.BLACK,
+        ),
+    ],
+)
+def test_tactical_patterns_terminal_detection(gomoku15_game, build_sgf, name, moves, last_action, expected):
+    """Basic and advanced tactical patterns with visual comments in each case."""
+
+    board = build_sgf(moves)
+    assert gomoku15_game.is_terminal_state(board, last_action, ChessType.BLACK) == expected
+
+
+@pytest.mark.unit
 def test_canonical_form_shape_and_channels(gomoku15_game):
     canonical = gomoku15_game.get_canonical_form("B[77];W[78]", ChessType.BLACK)
     assert canonical.shape == (15, 15, 2)
