@@ -27,9 +27,11 @@ class _TacticalPatternNNet(NNet):
 
         policy = numpy.zeros(self.rows * self.columns)
         if tactical_moves:
-            policy[tactical_moves] = 1.0 / len(tactical_moves)
+            probability_per_move = 1.0 / len(tactical_moves)
+            policy[tactical_moves] = probability_per_move
         else:
-            policy[numpy.flatnonzero(available.reshape(-1))] = 1.0
+            available_actions = numpy.flatnonzero(available.reshape(-1))
+            policy[available_actions] = 1.0 / len(available_actions)
         return policy, 0.0
 
     def _find_winning_moves(self, stones, available):
@@ -144,4 +146,4 @@ def test_mcts_nnet_pipeline_selects_expected_tactical_move(
         board, player
     )
 
-    assert list(actions)[int(numpy.argmax(counts))] == expected_action
+    assert int(actions[numpy.argmax(counts)]) == expected_action
