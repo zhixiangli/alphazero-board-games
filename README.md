@@ -23,6 +23,12 @@ connect4/       Connect4 preset + trainer + stdio player
 
 Each game ships with pretrained checkpoints in its `data/` directory, so you can play right away.
 
+## Related reading
+
+- [AlphaGo: The story so far](https://deepmind.google/research/alphago/)
+- [AlphaGo Zero: Starting from scratch](https://deepmind.google/blog/alphago-zero-starting-from-scratch/)
+- [AlphaZero: Shedding new light on chess, shogi, and Go](https://deepmind.google/blog/alphazero-shedding-new-light-on-chess-shogi-and-go/)
+
 ## Quick start
 
 ### 1) Prerequisites
