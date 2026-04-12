@@ -84,6 +84,26 @@ uv run pytest -m "not slow"
 uv run pytest -m slow
 ```
 
+Tests are discovered by `pytest` using `pytest.ini` (`pythonpath = .`, `--import-mode=importlib`) and organized under each package:
+
+- `alphazero/tests/` for shared core logic
+- `gomoku_9_9/tests/`, `gomoku_15_15/tests/`, and `connect4/tests/` for game-specific behavior
+
+Markers available in `pytest.ini`:
+
+- `unit` for fast isolated tests
+- `integration` for cross-component tests
+- `slow` for longer-running checks
+
+## Continuous Integration
+
+GitHub Actions runs on every pull request and push to `main` using Python 3.12 + `uv`, then executes the full suite with:
+
+```bash
+uv sync --dev
+uv run pytest
+```
+
 ## What I learned from (while building this repo)
 
 - [AlphaGo: The story so far](https://deepmind.google/research/alphago/)
