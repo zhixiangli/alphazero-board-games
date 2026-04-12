@@ -15,8 +15,14 @@ from connect4.game import ChessType, Connect4Game
     "board,player,expected_best_actions",
     [
         # Case 1 (input): BLACK can win vertically in column 0.
-        # Board view (bottom-up idea):
-        # col0: B,B,B,.,.,.   col1: W,W,W,.,.,.
+        # Board (row 0 at top):
+        #   0 1 2 3 4 5 6
+        # 0 . . . . . . .
+        # 1 . . . . . . .
+        # 2 . . . . . . .
+        # 3 B . . . . . .
+        # 4 B W . . . . .
+        # 5 B W W . . . .
         # Expected output: action {14} -> row=2,col=0.
         (
             "B[50];W[51];B[40];W[41];B[30];W[42]",
@@ -24,8 +30,14 @@ from connect4.game import ChessType, Connect4Game
             {2 * 7 + 0},
         ),
         # Case 2 (input): BLACK can win vertically in column 3.
-        # Board view:
-        # col3: B,B,B,.,.,.   and filler stones in columns 0/1/2.
+        # Board (row 0 at top):
+        #   0 1 2 3 4 5 6
+        # 0 . . . . . . .
+        # 1 . . . . . . .
+        # 2 . . . . . . .
+        # 3 . . . B . . .
+        # 4 . . . B . . .
+        # 5 W W W B . . .
         # Expected output: action {17} -> row=2,col=3.
         (
             "B[53];W[50];B[43];W[51];B[33];W[52]",
@@ -33,7 +45,14 @@ from connect4.game import ChessType, Connect4Game
             {2 * 7 + 3},
         ),
         # Case 3 (input): BLACK has three in a horizontal chain on bottom row.
-        # Board view bottom row: B B B . . . .
+        # Board (row 0 at top):
+        #   0 1 2 3 4 5 6
+        # 0 . . . . . . .
+        # 1 . . . . . . .
+        # 2 . . . . . . .
+        # 3 . . . . . . .
+        # 4 W W W . . . .
+        # 5 B B B . . . .
         # Expected output: action {38} -> row=5,col=3 to complete 4-in-a-row.
         (
             "B[50];W[40];B[51];W[41];B[52];W[42]",
@@ -41,6 +60,14 @@ from connect4.game import ChessType, Connect4Game
             {5 * 7 + 3},
         ),
         # Case 4 (input): WHITE threatens vertical win in column 0.
+        # Board (row 0 at top):
+        #   0 1 2 3 4 5 6
+        # 0 . . . . . . .
+        # 1 . . . . . . .
+        # 2 . . . . . . .
+        # 3 W . . . . . .
+        # 4 W B . . . . .
+        # 5 W B B . . . .
         # Expected output: BLACK blocks with action {14} -> row=2,col=0.
         (
             "W[50];B[51];W[40];B[41];W[30];B[42]",
@@ -48,6 +75,14 @@ from connect4.game import ChessType, Connect4Game
             {2 * 7 + 0},
         ),
         # Case 5 (input): BLACK can complete a diagonal tactical line.
+        # Board (row 0 at top):
+        #   0 1 2 3 4 5 6
+        # 0 . . . . . . .
+        # 1 . . . . . . .
+        # 2 . . B . . . .
+        # 3 . B B W . . .
+        # 4 B B W W . . .
+        # 5 B W W W . . .
         # Expected output: action {39} -> row=5,col=4.
         (
             "B[50];W[51];B[41];W[52];B[32];W[42];B[40];W[53];B[31];W[43];B[22]",
