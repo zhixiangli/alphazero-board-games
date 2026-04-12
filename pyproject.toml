@@ -16,7 +16,7 @@ dependencies = [
 dev = [
     "dotdict>=0.1",
     "pytest>=8.0",
-    "ruff>=0.15.0",
+    "ruff>=0.15.10",
 ]
 
 [tool.setuptools.packages.find]
