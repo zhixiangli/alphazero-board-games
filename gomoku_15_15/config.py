@@ -102,3 +102,7 @@ class GomokuConfig(AlphaZeroConfig):
     # Game-specific persistence paths
     save_checkpoint_path: str = "./gomoku_15_15/data/model"
     sample_pool_file: str = "./gomoku_15_15/data/samples.pkl"
+
+    def __post_init__(self):
+        if self.rows != self.columns:
+            raise ValueError("Gomoku requires a square board for D4 augmentation")

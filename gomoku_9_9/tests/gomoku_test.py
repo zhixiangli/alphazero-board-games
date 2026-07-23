@@ -9,6 +9,7 @@ import pytest
 
 from alphazero.game import Game
 from alphazero.nnet import AlphaZeroNNet
+from gomoku_9_9.config import GomokuConfig
 from gomoku_9_9.game import ChessType, GomokuGame
 
 
@@ -133,6 +134,12 @@ def test_coordinate_codec_supports_multi_digit_hex_coordinates(make_args):
     assert game.dec_action(board) == (16, 16)
     assert action not in game.available_actions(board)
     assert game.to_board(board)[16, 16] == ChessType.BLACK
+
+
+@pytest.mark.unit
+def test_gomoku_config_rejects_rectangular_boards():
+    with pytest.raises(ValueError, match="square board"):
+        GomokuConfig(rows=9, columns=10)
 
 
 @pytest.mark.unit
