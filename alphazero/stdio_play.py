@@ -78,7 +78,8 @@ def run_stdio_game(
 
     game = game_class(config)
     nnet = AlphaZeroNNet(game, config)
-    nnet.load_checkpoint(cli_args.checkpoint_path)
+    if not nnet.load_checkpoint(cli_args.checkpoint_path):
+        parser.error(f"could not load checkpoint matching {cli_args.checkpoint_path}*.pt")
     mcts = MCTS(nnet, game, config)
 
     board, player = game.get_initial_state()

@@ -169,7 +169,7 @@ class TestAlphaZeroNNet(unittest.TestCase):
         self.assertEqual(len(files), 1)
 
         # Load should not raise
-        self.nnet.load_checkpoint(prefix)
+        self.assertTrue(self.nnet.load_checkpoint(prefix))
 
         for f in files:
             os.remove(f)
@@ -178,7 +178,7 @@ class TestAlphaZeroNNet(unittest.TestCase):
     def test_load_checkpoint_no_files(self):
         """Loading from nonexistent path should not raise."""
         tmpdir = tempfile.mkdtemp()
-        self.nnet.load_checkpoint(os.path.join(tmpdir, "nonexistent"))
+        self.assertFalse(self.nnet.load_checkpoint(os.path.join(tmpdir, "nonexistent")))
         os.rmdir(tmpdir)
 
     def test_load_checkpoint_clears_frozen_model(self):
