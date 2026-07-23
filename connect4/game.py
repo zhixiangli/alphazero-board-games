@@ -35,7 +35,7 @@ class Connect4Game(Game):
         for stone in board.split(self.semicolon):
             if not stone:
                 continue
-            col = int(stone[3], 16)
+            _, (_, col) = self._decode_stone(stone)
             heights[col] += 1
         return heights
 
@@ -48,11 +48,20 @@ class Connect4Game(Game):
         if heights[col] >= self._rows:
             raise ValueError(f"Column {col} is full")
         row = self._drop_row(heights, col)
-        stone = "%s[%x%x]" % (player, row, col)
+        stone = self._encode_stone(player, row, col)
         next_p = self.next_player(player)
         if board:
             return board + self.semicolon + stone, next_p
         return stone, next_p
+
+    @staticmethod
+    def _encode_stone(player, row, col):
+        return "%s[%x,%x]" % (player, row, col)
+
+    @staticmethod
+    def _decode_stone(stone):
+        row, col = stone[2:-1].split(",", maxsplit=1)
+        return stone[0], (int(row, 16), int(col, 16))
 
     def is_terminal_state(self, board, action, player):
         if not board:
@@ -67,11 +76,10 @@ class Connect4Game(Game):
         for stone in board.split(self.semicolon):
             if not stone:
                 continue
-            x = int(stone[2], 16)
-            y = int(stone[3], 16)
+            color, (x, y) = self._decode_stone(stone)
             if 0 <= x < rows and 0 <= y < cols:
                 total_stones += 1
-                if stone[0] == player:
+                if color == player:
                     player_positions.add((x, y))
 
         ax, ay = divmod(action, cols)
@@ -134,9 +142,7 @@ class Connect4Game(Game):
             for stone in board.split(self.semicolon):
                 if not stone:
                     continue
-                color = stone[0]
-                x = int(stone[2], 16)
-                y = int(stone[3], 16)
+                color, (x, y) = self._decode_stone(stone)
                 if color == player:
                     feature[x, y, 0] = 1
                 elif color == opponent:
@@ -151,13 +157,13 @@ class Connect4Game(Game):
         return board
 
     def structure_sgf(self, sgf):
-        return [(s[0], (int(s[2], 16), int(s[3], 16))) for s in sgf.split(";") if s]
+        return [self._decode_stone(stone) for stone in sgf.split(";") if stone]
 
     def hex_action(self, action):
-        return "[%x%x]" % (action // self._cols, action % self._cols)
+        return self._encode_stone("", action // self._cols, action % self._cols)
 
     def dec_action(self, stone):
-        return int(stone[2], 16), int(stone[3], 16)
+        return self._decode_stone(stone)[1]
 
     def augment_samples(self, samples):
         augmented = []

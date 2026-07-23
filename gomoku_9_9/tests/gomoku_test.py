@@ -37,11 +37,11 @@ def test_next_player(gomoku9_game):
 def test_next_state_appends_moves_in_sgf_order(gomoku9_game):
     board, player = gomoku9_game.get_initial_state()
     board, player = gomoku9_game.next_state(board, 6, player)
-    assert board == "B[20]"
+    assert board == "B[2,0]"
     assert player == ChessType.WHITE
 
     board, player = gomoku9_game.next_state(board, 0, player)
-    assert board == "B[20];W[00]"
+    assert board == "B[2,0];W[0,0]"
     assert player == ChessType.BLACK
 
 
@@ -57,7 +57,7 @@ def test_terminal_contract_for_win_draw_and_non_terminal(gomoku9_game):
     )
     assert gomoku9_game.is_terminal_state(full_white, 0, ChessType.BLACK) == Game.DRAW
 
-    assert gomoku9_game.is_terminal_state("B[03];B[10]", 3, ChessType.BLACK) is None
+    assert gomoku9_game.is_terminal_state("B[0,3];B[1,0]", 3, ChessType.BLACK) is None
 
 
 @pytest.mark.unit
@@ -71,7 +71,9 @@ def test_available_actions_returns_unoccupied_cells(gomoku9_game):
 
 @pytest.mark.unit
 def test_canonical_form_respects_current_player_perspective(gomoku9_game):
-    canonical_white = gomoku9_game.get_canonical_form("B[20];W[21];B[11]", ChessType.WHITE)
+    canonical_white = gomoku9_game.get_canonical_form(
+        "B[2,0];W[2,1];B[1,1]", ChessType.WHITE
+    )
     numpy.testing.assert_array_equal(
         canonical_white,
         numpy.array(
@@ -83,7 +85,9 @@ def test_canonical_form_respects_current_player_perspective(gomoku9_game):
         ),
     )
 
-    canonical_black = gomoku9_game.get_canonical_form("B[20];W[21];B[11]", ChessType.BLACK)
+    canonical_black = gomoku9_game.get_canonical_form(
+        "B[2,0];W[2,1];B[1,1]", ChessType.BLACK
+    )
     numpy.testing.assert_array_equal(
         canonical_black,
         numpy.array(
@@ -106,18 +110,34 @@ def test_empty_canonical_form_is_all_zeros(gomoku9_game):
 
 @pytest.mark.unit
 def test_helper_methods_convert_actions_and_sgf(gomoku9_game):
-    assert gomoku9_game.hex_action(4) == "[11]"
-    assert gomoku9_game.dec_action("B[12]") == (1, 2)
-    assert gomoku9_game.structure_sgf("B[00];W[11];B[22]") == [
+    assert gomoku9_game.hex_action(4) == "[1,1]"
+    assert gomoku9_game.dec_action("B[1,2]") == (1, 2)
+    assert gomoku9_game.structure_sgf("B[0,0];W[1,1];B[2,2]") == [
         ("B", (0, 0)),
         ("W", (1, 1)),
         ("B", (2, 2)),
     ]
 
+    with pytest.raises(ValueError):
+        gomoku9_game.dec_action("B[12]")
+
+
+@pytest.mark.unit
+def test_coordinate_codec_supports_multi_digit_hex_coordinates(make_args):
+    game = GomokuGame(make_args(rows=17, columns=17, n_in_row=5))
+    action = 16 * 17 + 16
+
+    board, _ = game.next_state("", action, ChessType.BLACK)
+
+    assert board == "B[10,10]"
+    assert game.dec_action(board) == (16, 16)
+    assert action not in game.available_actions(board)
+    assert game.to_board(board)[16, 16] == ChessType.BLACK
+
 
 @pytest.mark.unit
 def test_to_board_maps_stones_and_preserves_empty_cells(gomoku9_game):
-    board = gomoku9_game.to_board("B[00];W[11]")
+    board = gomoku9_game.to_board("B[0,0];W[1,1]")
     assert board[0, 0] == ChessType.BLACK
     assert board[1, 1] == ChessType.WHITE
     assert board[0, 1] == ChessType.EMPTY

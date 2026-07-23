@@ -38,11 +38,20 @@ class GomokuGame(Game):
 
     def next_state(self, board, action, player):
         cols = self._cols
-        stone = "%s[%x%x]" % (player, action // cols, action % cols)
+        stone = self._encode_stone(player, action // cols, action % cols)
         next_p = ChessType.BLACK if player == ChessType.WHITE else ChessType.WHITE
         if board:
             return board + ";" + stone, next_p
         return stone, next_p
+
+    @staticmethod
+    def _encode_stone(player, row, col):
+        return "%s[%x,%x]" % (player, row, col)
+
+    @staticmethod
+    def _decode_stone(stone):
+        row, col = stone[2:-1].split(",", maxsplit=1)
+        return stone[0], (int(row, 16), int(col, 16))
 
     def is_terminal_state(self, board, action, player):
         if not board:
@@ -56,11 +65,10 @@ class GomokuGame(Game):
         player_positions = set()
         total_stones = 0
         for stone in board.split(";"):
-            x = int(stone[2], 16)
-            y = int(stone[3], 16)
+            color, (x, y) = self._decode_stone(stone)
             if 0 <= x < rows and 0 <= y < cols:
                 total_stones += 1
-                if stone[0] == player:
+                if color == player:
                     player_positions.add((x, y))
 
         # Check win: count consecutive stones through the action position
@@ -100,7 +108,8 @@ class GomokuGame(Game):
         cols = self._cols
         occupied = set()
         for stone in board.split(";"):
-            occupied.add(int(stone[2], 16) * cols + int(stone[3], 16))
+            _, (row, col) = self._decode_stone(stone)
+            occupied.add(row * cols + col)
         return [i for i in range(total) if i not in occupied]
 
     def log_status(self, board, counts, actions):
@@ -128,9 +137,7 @@ class GomokuGame(Game):
         if board:
             opponent = ChessType.BLACK if player == ChessType.WHITE else ChessType.WHITE
             for stone in board.split(";"):
-                color = stone[0]
-                x = int(stone[2], 16)
-                y = int(stone[3], 16)
+                color, (x, y) = self._decode_stone(stone)
                 if color == player:
                     feature[x, y, 0] = 1
                 elif color == opponent:
@@ -145,13 +152,13 @@ class GomokuGame(Game):
         return board
 
     def structure_sgf(self, sgf):
-        return [(s[0], (int(s[2], 16), int(s[3], 16))) for s in sgf.split(";") if s]
+        return [self._decode_stone(stone) for stone in sgf.split(";") if stone]
 
     def hex_action(self, action):
-        return "[%x%x]" % (action // self._cols, action % self._cols)
+        return self._encode_stone("", action // self._cols, action % self._cols)
 
     def dec_action(self, stone):
-        return int(stone[2], 16), int(stone[3], 16)
+        return self._decode_stone(stone)[1]
 
     # Data augmentation methods (merged from GomokuRL)
 

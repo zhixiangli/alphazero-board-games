@@ -37,7 +37,7 @@ class TestRL(unittest.TestCase):
         self.nnet = AlphaZeroNNet(self.game, self.args)
 
     def test_augment_board(self):
-        board = self.game.get_canonical_form("B[12];W[02]", ChessType.BLACK)
+        board = self.game.get_canonical_form("B[1,2];W[0,2]", ChessType.BLACK)
         augmented = self.game.augment_board(board)
         self.assertEqual(len(augmented), 8)
         # Each augmented board should have the same number of non-zero entries
@@ -88,7 +88,7 @@ class _StubGame:
 
     def next_state(self, board, action, player):
         self.last_action = action
-        return "B[00]", ChessType.WHITE
+        return "B[0,0]", ChessType.WHITE
 
     def is_terminal_state(self, board, action, player):
         return ChessType.BLACK

@@ -33,7 +33,7 @@ class TestGomokuTerminalDetection6x6(unittest.TestCase):
 
     def _make_board(self, moves):
         """Build a board string from a list of (player, row, col) tuples."""
-        stones = ["%s[%x%x]" % (p, r, c) for p, r, c in moves]
+        stones = ["%s[%x,%x]" % (p, r, c) for p, r, c in moves]
         return ";".join(stones)
 
     def test_horizontal_win(self):
@@ -226,7 +226,7 @@ class TestMCTSTermination(unittest.TestCase):
     def test_mcts_near_terminal_position(self):
         """MCTS should work correctly when close to a terminal state."""
         # Set up a board where Black has 3 in a row and one move to win
-        board = "B[00];W[10];B[01];W[11];B[02];W[12]"
+        board = "B[0,0];W[1,0];B[0,1];W[1,1];B[0,2];W[1,2]"
         player = ChessType.BLACK
 
         mcts = MCTS(self.nnet, self.game, self.args)
@@ -242,7 +242,7 @@ class TestMCTSTermination(unittest.TestCase):
     def test_terminal_states_cached_correctly(self):
         """Terminal states should be correctly cached in MCTS."""
         mcts = MCTS(self.nnet, self.game, self.args)
-        board = "B[00];W[10];B[01];W[11];B[02];W[12]"
+        board = "B[0,0];W[1,0];B[0,1];W[1,1];B[0,2];W[1,2]"
         player = ChessType.BLACK
 
         mcts.simulate(board, player)

@@ -27,7 +27,7 @@ from gomoku_9_9.game import ChessType, GomokuGame
         # 8 . . . . . . . . .
         # Expected output: winning extension at either end {39, 44}.
         (
-            "B[44];W[00];B[45];W[01];B[46];W[02];B[47];W[03]",
+            "B[4,4];W[0,0];B[4,5];W[0,1];B[4,6];W[0,2];B[4,7];W[0,3]",
             ChessType.BLACK,
             {4 * 9 + 3, 4 * 9 + 8},
         ),
@@ -44,7 +44,7 @@ from gomoku_9_9.game import ChessType, GomokuGame
         # 8 . . . . . . . . .
         # Expected output: winning extension at either end {31, 76}.
         (
-            "B[44];W[00];B[54];W[01];B[64];W[02];B[74];W[03]",
+            "B[4,4];W[0,0];B[5,4];W[0,1];B[6,4];W[0,2];B[7,4];W[0,3]",
             ChessType.BLACK,
             {3 * 9 + 4, 8 * 9 + 4},
         ),
@@ -61,7 +61,7 @@ from gomoku_9_9.game import ChessType, GomokuGame
         # 8 . . . . . . . . .
         # Expected output: winning extension at either end {10, 60}.
         (
-            "B[22];W[00];B[33];W[01];B[44];W[02];B[55];W[03]",
+            "B[2,2];W[0,0];B[3,3];W[0,1];B[4,4];W[0,2];B[5,5];W[0,3]",
             ChessType.BLACK,
             {1 * 9 + 1, 6 * 9 + 6},
         ),
@@ -78,7 +78,7 @@ from gomoku_9_9.game import ChessType, GomokuGame
         # 8 . . . . . . . . .
         # Expected output: winning extension at either end {16, 56}.
         (
-            "B[26];W[00];B[35];W[01];B[44];W[02];B[53];W[03]",
+            "B[2,6];W[0,0];B[3,5];W[0,1];B[4,4];W[0,2];B[5,3];W[0,3]",
             ChessType.BLACK,
             {1 * 9 + 7, 6 * 9 + 2},
         ),
@@ -95,7 +95,7 @@ from gomoku_9_9.game import ChessType, GomokuGame
         # 8 . . . . . . . . .
         # Expected output: checkpoint+MCTS defensive choice {4} -> row=0,col=4.
         (
-            "W[44];B[00];W[45];B[01];W[46];B[02];W[47];B[03]",
+            "W[4,4];B[0,0];W[4,5];B[0,1];W[4,6];B[0,2];W[4,7];B[0,3]",
             ChessType.BLACK,
             {0 * 9 + 4},
         ),

@@ -25,7 +25,7 @@ from connect4.game import ChessType, Connect4Game
         # 5 B W W . . . .
         # Expected output: action {14} -> row=2,col=0.
         (
-            "B[50];W[51];B[40];W[41];B[30];W[42]",
+            "B[5,0];W[5,1];B[4,0];W[4,1];B[3,0];W[4,2]",
             ChessType.BLACK,
             {2 * 7 + 0},
         ),
@@ -40,7 +40,7 @@ from connect4.game import ChessType, Connect4Game
         # 5 W W W B . . .
         # Expected output: action {17} -> row=2,col=3.
         (
-            "B[53];W[50];B[43];W[51];B[33];W[52]",
+            "B[5,3];W[5,0];B[4,3];W[5,1];B[3,3];W[5,2]",
             ChessType.BLACK,
             {2 * 7 + 3},
         ),
@@ -55,7 +55,7 @@ from connect4.game import ChessType, Connect4Game
         # 5 B B B . . . .
         # Expected output: action {38} -> row=5,col=3 to complete 4-in-a-row.
         (
-            "B[50];W[40];B[51];W[41];B[52];W[42]",
+            "B[5,0];W[4,0];B[5,1];W[4,1];B[5,2];W[4,2]",
             ChessType.BLACK,
             {5 * 7 + 3},
         ),
@@ -70,7 +70,7 @@ from connect4.game import ChessType, Connect4Game
         # 5 W B B . . . .
         # Expected output: BLACK blocks with action {14} -> row=2,col=0.
         (
-            "W[50];B[51];W[40];B[41];W[30];B[42]",
+            "W[5,0];B[5,1];W[4,0];B[4,1];W[3,0];B[4,2]",
             ChessType.BLACK,
             {2 * 7 + 0},
         ),
@@ -85,7 +85,7 @@ from connect4.game import ChessType, Connect4Game
         # 5 B W W W . . .
         # Expected output: action {39} -> row=5,col=4.
         (
-            "B[50];W[51];B[41];W[52];B[32];W[42];B[40];W[53];B[31];W[43];B[22]",
+            "B[5,0];W[5,1];B[4,1];W[5,2];B[3,2];W[4,2];B[4,0];W[5,3];B[3,1];W[4,3];B[2,2]",
             ChessType.BLACK,
             {5 * 7 + 4},
         ),
