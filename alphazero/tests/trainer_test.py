@@ -2,6 +2,7 @@
 #  -*- coding: utf-8 -*-
 
 import argparse
+import logging
 import unittest
 from dataclasses import fields
 from unittest.mock import patch, MagicMock
@@ -116,6 +117,29 @@ class TestSetupLogging(unittest.TestCase):
             self.assertTrue(os.path.exists(logpath))
         finally:
             shutil.rmtree(tmpdir)
+
+    def test_is_idempotent_for_the_same_log_path(self):
+        import os
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logpath = os.path.join(tmpdir, "training.log")
+            root_logger = logging.getLogger()
+            existing_handlers = set(root_logger.handlers)
+            try:
+                setup_logging(logpath)
+                setup_logging(logpath)
+                owned_handlers = [
+                    handler
+                    for handler in root_logger.handlers
+                    if getattr(handler, "_alphazero_log_path", None)
+                    == os.path.abspath(logpath)
+                ]
+                self.assertEqual(len(owned_handlers), 1)
+            finally:
+                for handler in set(root_logger.handlers) - existing_handlers:
+                    root_logger.removeHandler(handler)
+                    handler.close()
 
 
 class TestGomokuTrainerMain(unittest.TestCase):

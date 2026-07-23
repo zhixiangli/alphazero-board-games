@@ -42,12 +42,24 @@ def setup_logging(logpath, console=False):
     log_dir = os.path.dirname(logpath)
     if log_dir:
         os.makedirs(log_dir, exist_ok=True)
-    file_handler = logging.FileHandler(logpath)
-    file_handler.setFormatter(formatter)
-    root_logger.addHandler(file_handler)
+    absolute_logpath = os.path.abspath(logpath)
+    has_file_handler = any(
+        getattr(handler, "_alphazero_log_path", None) == absolute_logpath
+        for handler in root_logger.handlers
+    )
+    if not has_file_handler:
+        file_handler = logging.FileHandler(logpath)
+        file_handler._alphazero_log_path = absolute_logpath
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
 
-    if console:
+    has_console_handler = any(
+        getattr(handler, "_alphazero_console_handler", False)
+        for handler in root_logger.handlers
+    )
+    if console and not has_console_handler:
         console_handler = logging.StreamHandler(sys.stdout)
+        console_handler._alphazero_console_handler = True
         console_handler.setFormatter(formatter)
         root_logger.addHandler(console_handler)
 
