@@ -31,7 +31,7 @@ class _ResidualBlock(nn.Module):
 
     def __init__(self, filters, kernel_size):
         super().__init__()
-        padding = kernel_size[0] // 2
+        padding = (kernel_size[0] // 2, kernel_size[1] // 2)
         self.conv1 = nn.Conv2d(filters, filters, kernel_size, padding=padding)
         self.bn1 = nn.BatchNorm2d(filters)
         self.conv2 = nn.Conv2d(filters, filters, kernel_size, padding=padding)
@@ -50,7 +50,7 @@ class _AlphaZeroModel(nn.Module):
     def __init__(self, rows, columns, conv_filters, conv_kernel, residual_block_num):
         super().__init__()
         action_space_size = rows * columns
-        padding = conv_kernel[0] // 2
+        padding = (conv_kernel[0] // 2, conv_kernel[1] // 2)
 
         # Shared residual tower
         self.conv_init = nn.Conv2d(2, conv_filters, conv_kernel, padding=padding)

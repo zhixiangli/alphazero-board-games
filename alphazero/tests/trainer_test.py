@@ -32,6 +32,14 @@ class TestAddConfigArgs(unittest.TestCase):
         self.assertEqual(args.batch_size, 64)
         self.assertAlmostEqual(args.lr, 0.001)
 
+    def test_cli_parses_convolution_kernel_pair(self):
+        parser = argparse.ArgumentParser()
+        add_config_args(parser, GomokuConfig)
+
+        args = parser.parse_args(["-conv_kernel", "3,5"])
+
+        self.assertEqual(args.conv_kernel, (3, 5))
+
     def test_defaults_match_config(self):
         """Argparse defaults match the dataclass defaults."""
         parser = argparse.ArgumentParser()

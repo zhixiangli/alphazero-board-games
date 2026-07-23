@@ -76,6 +76,16 @@ class TestAlphaZeroModel(unittest.TestCase):
         self.assertEqual(policy.shape, (2, 25))  # batch=2, action_space=25
         self.assertEqual(value.shape, (2, 1))
 
+    def test_non_square_odd_kernel_preserves_board_shape(self):
+        model = _AlphaZeroModel(
+            rows=5, columns=7, conv_filters=16, conv_kernel=(3, 5), residual_block_num=2
+        )
+
+        policy, value = model(torch.randn(2, 2, 5, 7))
+
+        self.assertEqual(policy.shape, (2, 35))
+        self.assertEqual(value.shape, (2, 1))
+
     def test_value_head_range(self):
         """Value head uses tanh, so output should be in [-1, 1]."""
         model = _AlphaZeroModel(

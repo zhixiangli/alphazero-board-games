@@ -9,6 +9,7 @@ and training orchestration.  Game-specific trainers (e.g.
 config, and call :func:`run_training`.
 """
 
+import argparse
 import logging
 import os
 import sys
@@ -16,6 +17,18 @@ from dataclasses import MISSING, fields
 
 # Dataclass field types that map directly to argparse ``type`` converters.
 _ARGPARSE_TYPES = {int, float, str}
+
+
+def _parse_conv_kernel(value):
+    try:
+        kernel = tuple(int(part) for part in value.split(","))
+    except ValueError as e:
+        raise argparse.ArgumentTypeError("conv_kernel must be H,W") from e
+    if len(kernel) != 2 or any(size <= 0 or size % 2 == 0 for size in kernel):
+        raise argparse.ArgumentTypeError(
+            "conv_kernel must contain two positive odd integers"
+        )
+    return kernel
 
 
 def setup_logging(logpath, console=False):
@@ -57,7 +70,9 @@ def add_config_args(parser, config_class):
             kwargs["default"] = f.default
         elif f.default_factory is not MISSING:
             kwargs["default"] = f.default_factory()
-        if f.type in _ARGPARSE_TYPES:
+        if f.name == "conv_kernel":
+            kwargs["type"] = _parse_conv_kernel
+        elif f.type in _ARGPARSE_TYPES:
             kwargs["type"] = f.type
         parser.add_argument(f"-{f.name}", **kwargs)
 
