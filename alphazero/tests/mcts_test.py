@@ -111,9 +111,10 @@ def test_simulate_caches_expanded_states_and_terminal_outcomes(tiny_game, unifor
     board, player = tiny_game.get_initial_state()
     mcts.simulate(board, player)
 
-    assert board in mcts.prior_probability
-    assert board in mcts.visit_count
-    assert board in mcts.mean_action_value
+    state = (board, player)
+    assert state in mcts.prior_probability
+    assert state in mcts.visit_count
+    assert state in mcts.mean_action_value
     assert sum(1 for outcome in mcts.terminal_state.values() if outcome is not None) > 0
 
 
@@ -121,7 +122,7 @@ def test_simulate_caches_expanded_states_and_terminal_outcomes(tiny_game, unifor
 def test_simulate_applies_dirichlet_noise_to_root_when_enabled(tiny_game, uniform_nnet):
     args = dotdict(
         {
-            "simulation_num": 1,
+            "simulation_num": 2,
             "c_puct": 5,
             "dirichlet_alpha": 0.3,
             "dirichlet_epsilon": 0.25,
@@ -137,7 +138,7 @@ def test_simulate_applies_dirichlet_noise_to_root_when_enabled(tiny_game, unifor
     expected = (1.0 - args.dirichlet_epsilon) * (numpy.ones(3) / 3.0) + (
         args.dirichlet_epsilon * numpy.array([0.7, 0.2, 0.1])
     )
-    numpy.testing.assert_allclose(mcts.prior_probability[board], expected)
+    numpy.testing.assert_allclose(mcts.prior_probability[(board, player)], expected)
 
 
 @pytest.mark.unit
@@ -146,12 +147,24 @@ def test_search_expands_beyond_root_with_repeated_calls(tiny_game, uniform_nnet)
     board, player = tiny_game.get_initial_state()
 
     mcts.search(board, player)
-    assert board in mcts.prior_probability
+    assert (board, player) in mcts.prior_probability
 
     for _ in range(20):
         mcts.search(board, player)
 
     assert len(mcts.prior_probability) > 1
+
+
+@pytest.mark.unit
+def test_search_keeps_cache_entries_separate_for_each_player(tiny_game, uniform_nnet):
+    mcts = MCTS(uniform_nnet, tiny_game, dotdict({"simulation_num": 10, "c_puct": 5}))
+    board, player = tiny_game.get_initial_state()
+
+    mcts.search(board, player)
+    mcts.search(board, tiny_game.next_player(player))
+
+    assert (board, _ChessType.BLACK) in mcts.prior_probability
+    assert (board, _ChessType.WHITE) in mcts.prior_probability
 
 
 @pytest.mark.unit

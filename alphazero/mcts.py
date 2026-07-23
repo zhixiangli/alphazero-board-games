@@ -25,79 +25,88 @@ class MCTS:
             self.__add_root_dirichlet_noise(board, player)
         for _ in range(self.args.simulation_num):
             self.search(board, player)
+        state = self._state_key(board, player)
         self.game.log_status(
             board,
-            numpy.copy(self.visit_count[board]),
-            numpy.copy(self.available_actions[board]),
+            numpy.copy(self.visit_count[state]),
+            numpy.copy(self.available_actions[state]),
         )
-        return numpy.copy(self.available_actions[board]), numpy.copy(
-            self.visit_count[board]
+        return numpy.copy(self.available_actions[state]), numpy.copy(
+            self.visit_count[state]
         )
+
+    @staticmethod
+    def _state_key(board, player):
+        return board, player
 
     def __add_root_dirichlet_noise(self, board, player):
-        if board not in self.prior_probability:
+        state = self._state_key(board, player)
+        if state not in self.prior_probability:
             self.__expand(board, player)
 
-        priors = self.prior_probability[board]
+        priors = self.prior_probability[state]
         if len(priors) == 0:
             return
 
         dirichlet_noise = numpy.random.dirichlet(
             self.args.dirichlet_alpha * numpy.ones(len(priors))
         )
-        self.prior_probability[board] = (
+        self.prior_probability[state] = (
             (1.0 - self.args.dirichlet_epsilon) * priors
             + self.args.dirichlet_epsilon * dirichlet_noise
         )
 
     def search(self, board, player):
-        if board not in self.prior_probability:  # leaf
+        state = self._state_key(board, player)
+        if state not in self.prior_probability:  # leaf
             return -self.__expand(board, player)
-        index = self.__select(board)
-        action = self.available_actions[board][index]
+        index = self.__select(state)
+        action = self.available_actions[state][index]
         next_board, next_player = self.game.next_state(board, action, player)
-        if next_board not in self.terminal_state:
-            self.terminal_state[next_board] = self.game.is_terminal_state(
+        terminal_key = (next_board, action, player)
+        if terminal_key not in self.terminal_state:
+            self.terminal_state[terminal_key] = self.game.is_terminal_state(
                 next_board, action, player
             )
-        if self.terminal_state[next_board] is not None:
-            value = self.game.compute_reward(self.terminal_state[next_board], player)
+        if self.terminal_state[terminal_key] is not None:
+            value = self.game.compute_reward(self.terminal_state[terminal_key], player)
         else:
             value = self.search(next_board, next_player)
-        self.__backup(board, index, value)
+        self.__backup(state, index, value)
         return -value
 
-    def __select(self, board):
+    def __select(self, state):
         u = (
             self.args.c_puct
-            * self.prior_probability[board]
-            * numpy.sqrt(self.total_visit_count[board])
-            / (1.0 + self.visit_count[board])
+            * self.prior_probability[state]
+            * numpy.sqrt(self.total_visit_count[state])
+            / (1.0 + self.visit_count[state])
         )
-        values = self.mean_action_value[board] + u
+        values = self.mean_action_value[state] + u
         return int(numpy.argmax(values))
 
-    def __backup(self, board, index, value):
-        self.mean_action_value[board][index] = (
-            self.mean_action_value[board][index] * self.visit_count[board][index]
+    def __backup(self, state, index, value):
+        self.mean_action_value[state][index] = (
+            self.mean_action_value[state][index] * self.visit_count[state][index]
             + value
-        ) / (self.visit_count[board][index] + 1.0)
-        self.visit_count[board][index] += 1
-        self.total_visit_count[board] += 1
+        ) / (self.visit_count[state][index] + 1.0)
+        self.visit_count[state][index] += 1
+        self.total_visit_count[state] += 1
 
     def __expand(self, board, player):
+        state = self._state_key(board, player)
         canonical_board = self.game.get_canonical_form(board, player)
         proba, value = self.nnet.predict(canonical_board)
         actions = self.game.available_actions(board)
-        self.available_actions[board] = actions
+        self.available_actions[state] = actions
         if len(actions) == 0:
-            self.prior_probability[board] = numpy.array([])
-            self.total_visit_count[board] = 1
-            self.mean_action_value[board] = numpy.zeros(0)
-            self.visit_count[board] = numpy.zeros(0)
+            self.prior_probability[state] = numpy.array([])
+            self.total_visit_count[state] = 1
+            self.mean_action_value[state] = numpy.zeros(0)
+            self.visit_count[state] = numpy.zeros(0)
             return value
-        self.prior_probability[board] = proba[actions] / numpy.sum(proba[actions])
-        self.total_visit_count[board] = 1
-        self.mean_action_value[board] = numpy.zeros(len(actions))
-        self.visit_count[board] = numpy.zeros(len(actions))
+        self.prior_probability[state] = proba[actions] / numpy.sum(proba[actions])
+        self.total_visit_count[state] = 1
+        self.mean_action_value[state] = numpy.zeros(len(actions))
+        self.visit_count[state] = numpy.zeros(len(actions))
         return value

@@ -110,7 +110,7 @@ class TestAlphaZero(unittest.TestCase):
         logging.debug("total_visit_count %s", self.mcts.total_visit_count)
         logging.debug("available_actions %s", self.mcts.available_actions)
 
-        counts = self.mcts.visit_count[board]
+        counts = self.mcts.visit_count[(board, player)]
         self.assertTrue(counts[0] < counts[1])
         self.assertTrue(counts[-1] < counts[-2])
 
