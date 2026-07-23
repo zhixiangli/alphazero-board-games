@@ -9,6 +9,7 @@ import os
 import pickle
 import random
 import threading
+import tempfile
 from collections import deque
 
 import numpy
@@ -22,7 +23,9 @@ class RL:
         self.game = game
         self.args = args
         self.sample_pool = deque(maxlen=args.max_sample_pool_size)
-        self.sample_pool_persistence_lock = threading.Lock()
+        self._persistence_condition = threading.Condition()
+        self._pending_sample_pool = None
+        self._persistence_thread = None
 
         persisted_sample_pool = self.read_sample_pool()
         if persisted_sample_pool:
@@ -86,23 +89,78 @@ class RL:
                 and (i + 1) % self.args.train_interval == 0
             ):
                 self.nnet.train(random.sample(self.sample_pool, self.args.batch_size))
-                persist_sample_pool_thread = threading.Thread(
-                    target=self.persist_sample_pool,
-                    args=[copy.deepcopy(self.sample_pool)],
-                )
-                persist_sample_pool_thread.start()
+                self.queue_sample_pool_persistence(self.sample_pool)
                 self.nnet.save_checkpoint(self.args.save_checkpoint_path)
 
     def persist_sample_pool(self, samples):
-        with self.sample_pool_persistence_lock:
-            logging.info("persist sample pool start")
-            with open(self.args.sample_pool_file, "wb") as f:
+        """Synchronously persist *samples* for callers that need durability now."""
+        self._write_sample_pool(samples)
+
+    def queue_sample_pool_persistence(self, samples):
+        """Persist only the newest snapshot without accumulating writer threads."""
+        with self._persistence_condition:
+            self._pending_sample_pool = copy.deepcopy(samples)
+            if self._persistence_thread is None:
+                self._persistence_thread = threading.Thread(
+                    target=self._persist_pending_sample_pools,
+                    name="sample-pool-persistence",
+                )
+                self._persistence_thread.start()
+            self._persistence_condition.notify()
+
+    def wait_for_persistence(self):
+        """Wait until the queued replay-pool snapshot has been written."""
+        while True:
+            with self._persistence_condition:
+                persistence_thread = self._persistence_thread
+            if persistence_thread is None:
+                return
+            persistence_thread.join()
+
+    def _persist_pending_sample_pools(self):
+        while True:
+            with self._persistence_condition:
+                samples = self._pending_sample_pool
+                self._pending_sample_pool = None
+            self._write_sample_pool(samples)
+            with self._persistence_condition:
+                if self._pending_sample_pool is None:
+                    self._persistence_thread = None
+                    self._persistence_condition.notify_all()
+                    return
+
+    def _write_sample_pool(self, samples):
+        logging.info("persist sample pool start")
+        directory = os.path.dirname(self.args.sample_pool_file) or "."
+        os.makedirs(directory, exist_ok=True)
+        fd, temp_path = tempfile.mkstemp(
+            prefix=".samples-", suffix=".tmp", dir=directory
+        )
+        try:
+            with os.fdopen(fd, "wb") as f:
                 pickle.dump(samples, f)
-            logging.info("persist sample pool done")
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, self.args.sample_pool_file)
+        except Exception:
+            try:
+                os.unlink(temp_path)
+            except FileNotFoundError:
+                pass
+            raise
+        logging.info("persist sample pool done")
 
     def read_sample_pool(self):
         if not os.path.exists(self.args.sample_pool_file):
             return None
-        with open(self.args.sample_pool_file, "rb") as f:
-            logging.info("load samples from %s", self.args.sample_pool_file)
-            return pickle.load(f)
+        try:
+            with open(self.args.sample_pool_file, "rb") as f:
+                logging.info("load samples from %s", self.args.sample_pool_file)
+                return pickle.load(f)
+        except (OSError, EOFError, pickle.UnpicklingError) as e:
+            logging.warning(
+                "ignoring unreadable sample pool at %s: %s",
+                self.args.sample_pool_file,
+                e,
+            )
+            return None

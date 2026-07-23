@@ -3,6 +3,7 @@
 
 import os
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
 from collections import deque
@@ -252,6 +253,63 @@ class TestRLSamplePool(unittest.TestCase):
         for i in range(10):
             rl.sample_pool.append(("board", "policy", i))
         self.assertEqual(len(rl.sample_pool), 5)
+
+    def test_corrupt_sample_pool_is_ignored(self):
+        tmpdir = tempfile.mkdtemp()
+        sample_file = os.path.join(tmpdir, "samples.pkl")
+        with open(sample_file, "wb") as f:
+            f.write(b"not a pickle")
+
+        args = dotdict(
+            {
+                "rows": 3,
+                "columns": 3,
+                "max_sample_pool_size": 100,
+                "sample_pool_file": sample_file,
+            }
+        )
+        rl = RL(nnet=None, game=None, args=args)
+
+        self.assertIsNone(rl.read_sample_pool())
+
+        os.remove(sample_file)
+        os.rmdir(tmpdir)
+
+    def test_queued_persistence_uses_one_worker_and_writes_latest_snapshot(self):
+        tmpdir = tempfile.mkdtemp()
+        sample_file = os.path.join(tmpdir, "samples.pkl")
+        args = dotdict(
+            {
+                "rows": 3,
+                "columns": 3,
+                "max_sample_pool_size": 100,
+                "sample_pool_file": sample_file,
+            }
+        )
+        rl = RL(nnet=None, game=None, args=args)
+        started = threading.Event()
+        release = threading.Event()
+        original_write = rl._write_sample_pool
+
+        def blocking_write(samples):
+            started.set()
+            release.wait(timeout=1)
+            original_write(samples)
+
+        with patch.object(rl, "_write_sample_pool", side_effect=blocking_write):
+            rl.queue_sample_pool_persistence([("first",)])
+            self.assertTrue(started.wait(timeout=1))
+            first_worker = rl._persistence_thread
+            rl.queue_sample_pool_persistence([("latest",)])
+            self.assertIs(rl._persistence_thread, first_worker)
+            release.set()
+            rl.wait_for_persistence()
+
+        self.assertEqual(rl.read_sample_pool(), [("latest",)])
+        self.assertFalse(any(name.endswith(".tmp") for name in os.listdir(tmpdir)))
+
+        os.remove(sample_file)
+        os.rmdir(tmpdir)
 
 
 if __name__ == "__main__":
