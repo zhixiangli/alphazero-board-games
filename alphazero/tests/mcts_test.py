@@ -161,3 +161,16 @@ def test_simulate_handles_single_forced_winning_move(tiny_game, uniform_nnet):
     actions, counts = mcts.simulate("B.W", _ChessType.BLACK)
     assert list(actions) == [1]
     assert int(counts[0]) == 199
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("simulation_num", [0, 1])
+def test_simulate_rejects_insufficient_simulations(tiny_game, uniform_nnet, simulation_num):
+    mcts = MCTS(
+        uniform_nnet,
+        tiny_game,
+        dotdict({"simulation_num": simulation_num, "c_puct": 5}),
+    )
+
+    with pytest.raises(ValueError, match="simulation_num must be at least 2"):
+        mcts.simulate(*tiny_game.get_initial_state())

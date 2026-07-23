@@ -19,6 +19,8 @@ class MCTS:
         self.available_actions = {}
 
     def simulate(self, board, player, add_root_noise=False):
+        if self.args.simulation_num < 2:
+            raise ValueError("simulation_num must be at least 2")
         if add_root_noise:
             self.__add_root_dirichlet_noise(board, player)
         for _ in range(self.args.simulation_num):
