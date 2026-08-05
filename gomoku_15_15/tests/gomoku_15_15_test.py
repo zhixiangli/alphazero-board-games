@@ -30,7 +30,11 @@ def test_available_actions_empty_board(gomoku15_game):
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "action,expected",
-    [(7 * 15 + 7, "B[77]"), (10 * 15 + 14, "B[ae]"), (14 * 15 + 14, "B[ee]")],
+    [
+        (7 * 15 + 7, "B[7,7]"),
+        (10 * 15 + 14, "B[a,e]"),
+        (14 * 15 + 14, "B[e,e]"),
+    ],
     ids=["center", "hex_coords", "corner"],
 )
 def test_next_state_encodes_coordinates(gomoku15_game, action, expected):
@@ -42,10 +46,10 @@ def test_next_state_encodes_coordinates(gomoku15_game, action, expected):
 
 @pytest.mark.unit
 def test_hex_action_and_dec_action_support_high_coords(gomoku15_game):
-    assert gomoku15_game.hex_action(161) == "[ab]"
-    assert gomoku15_game.hex_action(224) == "[ee]"
-    assert gomoku15_game.dec_action("B[ae]") == (10, 14)
-    assert gomoku15_game.dec_action("W[ee]") == (14, 14)
+    assert gomoku15_game.hex_action(161) == "[a,b]"
+    assert gomoku15_game.hex_action(224) == "[e,e]"
+    assert gomoku15_game.dec_action("B[a,e]") == (10, 14)
+    assert gomoku15_game.dec_action("W[e,e]") == (14, 14)
 
 
 @pytest.mark.unit
@@ -84,7 +88,7 @@ def test_four_in_a_row_is_not_terminal_when_five_required(gomoku15_game, build_s
 
 @pytest.mark.unit
 def test_canonical_form_shape_and_channels(gomoku15_game):
-    canonical = gomoku15_game.get_canonical_form("B[77];W[78]", ChessType.BLACK)
+    canonical = gomoku15_game.get_canonical_form("B[7,7];W[7,8]", ChessType.BLACK)
     assert canonical.shape == (15, 15, 2)
     assert canonical[7, 7, 0] == 1
     assert canonical[7, 8, 1] == 1
@@ -94,14 +98,14 @@ def test_canonical_form_shape_and_channels(gomoku15_game):
 
 @pytest.mark.unit
 def test_canonical_form_supports_hex_coordinates(gomoku15_game):
-    canonical = gomoku15_game.get_canonical_form("B[ae];W[ea]", ChessType.BLACK)
+    canonical = gomoku15_game.get_canonical_form("B[a,e];W[e,a]", ChessType.BLACK)
     assert canonical[10, 14, 0] == 1
     assert canonical[14, 10, 1] == 1
 
 
 @pytest.mark.unit
 def test_available_actions_exclude_played_moves(gomoku15_game):
-    actions = gomoku15_game.available_actions("B[77];W[78]")
+    actions = gomoku15_game.available_actions("B[7,7];W[7,8]")
     assert len(actions) == 223
     assert 7 * 15 + 7 not in actions
     assert 7 * 15 + 8 not in actions
@@ -126,11 +130,11 @@ def test_augment_samples_preserves_shape_probability_and_value(gomoku15_game):
 
 @pytest.mark.unit
 def test_structure_sgf_and_to_board(gomoku15_game):
-    sgf = "B[ae];W[ea];B[00]"
+    sgf = "B[a,e];W[e,a];B[0,0]"
     parsed = gomoku15_game.structure_sgf(sgf)
     assert parsed == [("B", (10, 14)), ("W", (14, 10)), ("B", (0, 0))]
 
-    board = gomoku15_game.to_board("B[00];W[ee]")
+    board = gomoku15_game.to_board("B[0,0];W[e,e]")
     assert board[0, 0] == ChessType.BLACK
     assert board[14, 14] == ChessType.WHITE
     assert board[7, 7] == ChessType.EMPTY

@@ -52,6 +52,6 @@ def build_sgf() -> Callable[[list[tuple[str, int, int]]], str]:
     """Build SGF-like move strings shared by Gomoku/Connect4 tests."""
 
     def _build(moves: list[tuple[str, int, int]]) -> str:
-        return ";".join(f"{player}[{row:x}{col:x}]" for player, row, col in moves)
+        return ";".join(f"{player}[{row:x},{col:x}]" for player, row, col in moves)
 
     return _build
